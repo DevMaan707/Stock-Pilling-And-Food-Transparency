@@ -1,15 +1,17 @@
-require("@nomicfoundation/hardhat-toolbox");
-require('dotenv').config();
+require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-ethers');
+require('@nomicfoundation/hardhat-toolbox');
+require('dotenv').config(); 
 
-const {API_URL, PRIVATE_KEY}= process.env
-
-/** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.24",
-  defaultNetwork:'',
-  networks:{
-    hardhat: {},
-    
+  networks: {
+    goerli: {
+      url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, 
+      accounts: [`0x${process.env.PRIVATE_KEY}`] 
+    }
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY 
   }
 };

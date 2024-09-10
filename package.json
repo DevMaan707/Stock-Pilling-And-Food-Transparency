@@ -1,32 +1,7 @@
 {
-  "name": "stock-pilling",
-  "version": "1.0.0",
-  "description": "A blockchain-based platform for ensuring transparency, preventing stockpiling, and enhancing food safety in the supply chain. This project leverages smart contracts to automate and secure the tracking of food products from farm to table, empowering consumers with detailed provenance information and ensuring compliance with regulatory standards.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "blockchain",
-    "supply",
-    "chain",
-    "transparenct",
-    "food",
-    "safety",
-    "ethereum",
-    "solidity",
-    "smart",
-    "contracts"
-  ],
-  "author": "DevMaan707",
-  "license": "ISC",
-  "dependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "dotenv": "^16.4.5",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "ethers": "^5.7.2",
-    "express": "^4.20.0",
-    "express-fileupload": "^1.5.1",
-    "hardhat": "^2.22.10",
-    "path": "^0.12.7"
+    "hardhat": "^2.22.10"
   }
 }
