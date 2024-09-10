@@ -79,17 +79,17 @@ This project is a blockchain-based platform designed to enhance transparency, pr
    ```bash
    git clone https://github.com/yourusername/stock-pilling.git
    cd stock-pilling
-2. **Install dependencies:
+2. **Install dependencies**:
    ```bash
    npm i
    ```
-3. **Compile smart contracts:
+3. **Compile smart contracts**:
    ```bash
     npx hardhat compile
    ```
-4. **Deploy snart contracts to Goerli testnet
+4. **Deploy snart contracts to Goerli testnet**:
    ```bash
     npx hardhat run scripts/deploy.js --network goerli
    ```
 
-   **Make sure you have set your own envs
+   **Make sure you have set your own envs**
