@@ -70,7 +70,7 @@ This project is a blockchain-based platform designed to enhance transparency, pr
 - **Smart Contracts**: Solidity
 - **Development Environment**: Hardhat
 - **Backend**: Node.js with Express
-- **Frontend**: React.js or Angular
+- **Frontend**: React.js and Flutter
 - **Deployment**: Deployed on the Goerli Testnet
 
 ## Installation
