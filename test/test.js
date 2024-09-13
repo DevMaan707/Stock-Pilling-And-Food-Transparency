@@ -221,6 +221,8 @@ describe("Complete Supply Chain Workflow", function () {
         const complianceReportRes = await request(app)
             .get('/compliance-report/PRODUCT1');
         expect(complianceReportRes.statusCode).to.equal(200);
+
+        // This is where you check if the response text contains the expected product ID
         expect(complianceReportRes.text).to.include('Compliance Report for Product ID: PRODUCT1');
     });
 
@@ -238,4 +240,3 @@ describe("Complete Supply Chain Workflow", function () {
         expect(qualityChecksRes.body).to.be.an('array');
     });
 });
-

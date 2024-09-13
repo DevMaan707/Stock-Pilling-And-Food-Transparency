@@ -14,28 +14,30 @@ contract ComplianceAndReporting {
     }
 
     function generateComplianceReport(string memory productId) public view returns (string memory) {
-        // Ensure the user has the regulator role
-        (, UserManagement.Role role) = userManagement.getUser(msg.sender);
-        require(role == UserManagement.Role.Regulator, "Unauthorized to generate compliance reports.");
+    // Ensure the user has the regulator role
+    (, UserManagement.Role role) = userManagement.getUser(msg.sender);
+    require(role == UserManagement.Role.Regulator, "Unauthorized to generate compliance reports.");
 
-        // Fetch shipment history from SupplyChainManagement
-        SupplyChainManagement.Shipment[] memory shipmentHistory = supplyChain.getShipmentHistory(productId);
-        require(shipmentHistory.length > 0, "No shipment history found for this product.");
+    // Fetch shipment history from SupplyChainManagement
+    SupplyChainManagement.Shipment[] memory shipmentHistory = supplyChain.getShipmentHistory(productId);
+    require(shipmentHistory.length > 0, "No shipment history found for this product.");
 
-        // Generate report
-        string memory report = "Compliance Report:\n";
-        for (uint i = 0; i < shipmentHistory.length; i++) {
-            report = string(abi.encodePacked(
-                report, 
-                "Shipment ", uint2str(i), ":\n",
-                "Origin: ", addressToString(shipmentHistory[i].origin), "\n",
-                "Destination: ", addressToString(shipmentHistory[i].destination), "\n",
-                "Quantity: ", uint2str(shipmentHistory[i].quantity), "\n"
-            ));
-        }
+    // Include the product ID in the report
+    string memory report = string(abi.encodePacked("Compliance Report for Product ID: ", productId, "\n"));
 
-        return report;
+    // Generate report
+    for (uint i = 0; i < shipmentHistory.length; i++) {
+        report = string(abi.encodePacked(
+            report, 
+            "Shipment ", uint2str(i), ":\n",
+            "Origin: ", addressToString(shipmentHistory[i].origin), "\n",
+            "Destination: ", addressToString(shipmentHistory[i].destination), "\n",
+            "Quantity: ", uint2str(shipmentHistory[i].quantity), "\n"
+        ));
     }
+
+    return report;
+}
 
     function auditTransactionHistory(string memory productId) public view returns (SupplyChainManagement.Shipment[] memory) {
         return supplyChain.getShipmentHistory(productId);
