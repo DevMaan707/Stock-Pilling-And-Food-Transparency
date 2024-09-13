@@ -6,11 +6,11 @@ let userManagement, supplyChainManagement;
 describe("Supply Chain and User Management", function () {
     before(async () => {
         const UserManagement = await ethers.getContractFactory("UserManagement");
-        userManagement = await UserManagement.deploy();
+        userManagement = await UserManagement.deploy({ gasPrice: ethers.utils.parseUnits('2', 'gwei') });
         await userManagement.deployed();
 
         const SupplyChainManagement = await ethers.getContractFactory("SupplyChainManagement");
-        supplyChainManagement = await SupplyChainManagement.deploy(userManagement.address);
+        supplyChainManagement = await SupplyChainManagement.deploy(userManagement.address, { gasPrice: ethers.utils.parseUnits('2', 'gwei') });
         await supplyChainManagement.deployed();
     });
 
@@ -22,9 +22,11 @@ describe("Supply Chain and User Management", function () {
     });
 
     it("Should record a shipment", async function () {
-        await supplyChainManagement.recordShipment("PRODUCT123", "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd", 1);
+        await supplyChainManagement.recordShipment("PRODUCT123", "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd", 100, ethers.utils.parseUnits('1', 'ether'));
         const shipmentHistory = await supplyChainManagement.getShipmentHistory("PRODUCT123");
         expect(shipmentHistory.length).to.equal(1);
         expect(shipmentHistory[0].destination).to.equal("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd");
+        expect(shipmentHistory[0].quantity).to.equal(100);
+        expect(shipmentHistory[0].farmerPrice).to.equal(ethers.utils.parseUnits('1', 'ether'));
     });
 });

@@ -10,7 +10,7 @@ contract DisputeResolution {
         string details;
         bool resolved;
         string resolution;
-        bytes32 evidenceHash; // Optional hash of evidence stored off-chain (e.g., on IPFS)
+        bytes32 evidenceHash; 
     }
 
     uint256 private disputeCounter;
