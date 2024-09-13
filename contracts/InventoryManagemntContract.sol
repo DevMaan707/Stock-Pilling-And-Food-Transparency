@@ -40,10 +40,10 @@ contract InventoryManagement {
         emit InventoryUpdated(productId, quantity, price);
     }
 
-    function getInventory(string memory productId) public view returns (Inventory memory) {
-        return inventories[msg.sender][productId];
-    }
-
+  function getInventory(string memory productId) public view returns (uint256 quantity, uint256 price) {
+    Inventory memory inventory = inventories[msg.sender][productId];
+    return (inventory.quantity, inventory.price);
+}
     function getInventoryHistory(string memory productId) public view returns (uint256[] memory, uint256[] memory, uint256[] memory) {
         Inventory storage inventory = inventories[msg.sender][productId];
         return (inventory.quantityHistory, inventory.priceHistory, inventory.timestamps);

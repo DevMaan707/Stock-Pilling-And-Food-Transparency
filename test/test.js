@@ -217,9 +217,10 @@ describe("Complete Integration Test for Stockpiling System", function () {
         const res = await request(app)
             .get('/inventory/PRODUCT1231');
         expect(res.statusCode).to.equal(200);
-        expect(res.body.quantity).to.equal(50);
-        expect(res.body.price).to.equal(ethers.utils.parseUnits('2', 'ether').toString());
+        expect(res.body.quantity).to.equal(50); // Quantity should be returned properly
+        expect(res.body.price).to.equal(ethers.utils.parseUnits('2', 'ether').toString()); // Ensure price is returned as a string if needed
     });
+    
 
     it("Should initiate a dispute", async function () {
         const res = await request(app)
