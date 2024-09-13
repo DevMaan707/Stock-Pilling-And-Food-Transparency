@@ -9,6 +9,8 @@ contract DisputeResolution {
         string issue;
         string details;
         bool resolved;
+        string resolution;
+        bytes32 evidenceHash; // Optional hash of evidence stored off-chain (e.g., on IPFS)
     }
 
     uint256 private disputeCounter;
@@ -21,14 +23,16 @@ contract DisputeResolution {
         disputeCounter = 0;
     }
 
-    function initiateDispute(string memory productId, string memory issue, string memory details) public {
+    function initiateDispute(string memory productId, string memory issue, string memory details, bytes32 evidenceHash) public {
         disputes[disputeCounter] = Dispute({
             disputeId: disputeCounter,
             productId: productId,
             initiator: msg.sender,
             issue: issue,
             details: details,
-            resolved: false
+            resolved: false,
+            resolution: "",
+            evidenceHash: evidenceHash
         });
 
         emit DisputeInitiated(disputeCounter, productId, msg.sender, issue);
@@ -38,6 +42,7 @@ contract DisputeResolution {
     function resolveDispute(uint256 disputeId, string memory resolution) public {
         require(disputes[disputeId].resolved == false, "Dispute already resolved.");
         disputes[disputeId].resolved = true;
+        disputes[disputeId].resolution = resolution;
 
         emit DisputeResolved(disputeId, resolution);
     }

@@ -1,46 +1,44 @@
-
 const hre = require("hardhat");
-const { ethers } = require("hardhat");
 
 async function main() {
- 
-    const [deployer] = await ethers.getSigners();
 
+    const [deployer] = await ethers.getSigners();
     console.log("Deploying contracts with the account:", deployer.address);
 
-    // Deploy the UserManagement contract
+    const gasPrice = ethers.utils.parseUnits('2', 'gwei');
+
+  
     const UserManagement = await ethers.getContractFactory("UserManagement");
-    const userManagement = await UserManagement.deploy();
+    const userManagement = await UserManagement.deploy({ gasPrice });
     await userManagement.deployed();
     console.log("UserManagement contract deployed to:", userManagement.address);
 
-    // Deploy the SupplyChainManagement contract with the address of UserManagement
     const SupplyChainManagement = await ethers.getContractFactory("SupplyChainManagement");
-    const supplyChainManagement = await SupplyChainManagement.deploy(userManagement.address);
+    const supplyChainManagement = await SupplyChainManagement.deploy(userManagement.address, { gasPrice });
     await supplyChainManagement.deployed();
     console.log("SupplyChainManagement contract deployed to:", supplyChainManagement.address);
 
-    // Deploy the InventoryManagement contract with the address of UserManagement
+
     const InventoryManagement = await ethers.getContractFactory("InventoryManagement");
-    const inventoryManagement = await InventoryManagement.deploy(userManagement.address);
+    const inventoryManagement = await InventoryManagement.deploy(userManagement.address, { gasPrice });
     await inventoryManagement.deployed();
     console.log("InventoryManagement contract deployed to:", inventoryManagement.address);
 
-    // Deploy the DisputeResolution contract
+    
     const DisputeResolution = await ethers.getContractFactory("DisputeResolution");
-    const disputeResolution = await DisputeResolution.deploy();
+    const disputeResolution = await DisputeResolution.deploy({ gasPrice });
     await disputeResolution.deployed();
     console.log("DisputeResolution contract deployed to:", disputeResolution.address);
 
-    // Deploy the ComplianceAndReporting contract with the address of SupplyChainManagement
+
     const ComplianceAndReporting = await ethers.getContractFactory("ComplianceAndReporting");
-    const complianceAndReporting = await ComplianceAndReporting.deploy(supplyChainManagement.address);
+    const complianceAndReporting = await ComplianceAndReporting.deploy(supplyChainManagement.address, { gasPrice });
     await complianceAndReporting.deployed();
     console.log("ComplianceAndReporting contract deployed to:", complianceAndReporting.address);
 
-    // Deploy the ConsumerTransparency contract with the address of SupplyChainManagement
+
     const ConsumerTransparency = await ethers.getContractFactory("ConsumerTransparency");
-    const consumerTransparency = await ConsumerTransparency.deploy(supplyChainManagement.address);
+    const consumerTransparency = await ConsumerTransparency.deploy(supplyChainManagement.address, { gasPrice });
     await consumerTransparency.deployed();
     console.log("ConsumerTransparency contract deployed to:", consumerTransparency.address);
 

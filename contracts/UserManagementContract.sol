@@ -14,6 +14,7 @@ contract UserManagement {
     mapping(address => bool) public isUserRegistered;
 
     event UserRegistered(address userAddress, string username, Role role);
+    event UserProfileUpdated(address userAddress, string newUsername, Role newRole);
 
     function registerUser(string memory username, Role role) public {
         require(!isUserRegistered[msg.sender], "User already registered.");
@@ -26,6 +27,16 @@ contract UserManagement {
         isUserRegistered[msg.sender] = true;
 
         emit UserRegistered(msg.sender, username, role);
+    }
+
+    function updateUserProfile(string memory newUsername, Role newRole) public {
+        require(isUserRegistered[msg.sender], "User not registered.");
+
+        User storage user = users[msg.sender];
+        user.username = newUsername;
+        user.role = newRole;
+
+        emit UserProfileUpdated(msg.sender, newUsername, newRole);
     }
 
     function getUser(address userAddress) public view returns (string memory, Role) {

@@ -2,15 +2,21 @@
 pragma solidity ^0.8.24;
 
 import "./SupplyChainManagementContract.sol";
+import "./UserManagementContract.sol";
 
 contract ComplianceAndReporting {
     SupplyChainManagement private supplyChain;
+    UserManagement private userManagement;
 
-    constructor(address supplyChainAddress) {
+    constructor(address supplyChainAddress, address userManagementAddress) {
         supplyChain = SupplyChainManagement(supplyChainAddress);
+        userManagement = UserManagement(userManagementAddress);
     }
 
     function generateComplianceReport(string memory productId) public view returns (string memory) {
+        (, UserManagement.Role role) = userManagement.getUser(msg.sender);
+        require(role == UserManagement.Role.Regulator, "Unauthorized to generate compliance reports.");
+
         SupplyChainManagement.Shipment[] memory shipmentHistory = supplyChain.getShipmentHistory(productId);
         require(shipmentHistory.length > 0, "No shipment history found for this product.");
 
@@ -23,6 +29,8 @@ contract ComplianceAndReporting {
             report = string(abi.encodePacked(report, "  - Origin: ", addressToString(shipment.origin), "\n"));
             report = string(abi.encodePacked(report, "  - Destination: ", addressToString(shipment.destination), "\n"));
             report = string(abi.encodePacked(report, "  - Status: ", getShipmentStatus(shipment.status), "\n"));
+            report = string(abi.encodePacked(report, "  - Farmer Price: ", uint2str(shipment.farmerPrice), "\n"));
+            report = string(abi.encodePacked(report, "  - Retailer Price: ", uint2str(shipment.retailerPrice), "\n"));
             report = string(abi.encodePacked(report, "  - Timestamp: ", uint2str(shipment.timestamp), "\n"));
         }
 
@@ -32,7 +40,6 @@ contract ComplianceAndReporting {
     function auditTransactionHistory(string memory productId) public view returns (SupplyChainManagement.Shipment[] memory) {
         return supplyChain.getShipmentHistory(productId);
     }
-
 
     function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
         if (_i == 0) {

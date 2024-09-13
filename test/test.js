@@ -15,10 +15,10 @@ describe("Supply Chain and User Management", function () {
     });
 
     it("Should register a user", async function () {
-        await userManagement.registerUser("Alice", 0); // 0 represents the Role.Farmer
+        await userManagement.registerUser("Alice", 0);
         const user = await userManagement.getUser(ethers.provider.getSigner(0).getAddress());
         expect(user[0]).to.equal("Alice");
-        expect(user[1]).to.equal(0); // 0 represents Role.Farmer
+        expect(user[1]).to.equal(0); 
     });
 
     it("Should record a shipment", async function () {
