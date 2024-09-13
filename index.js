@@ -40,7 +40,7 @@ app.post('/create-wallet', async (req, res) => {
 });
 
 async function initializeContracts() {
-    provider = new ethers.providers.JsonRpcProvider(process.env.LOCAL_BLOCKCHAIN_URL);
+    provider = new ethers.providers.JsonRpcProvider(process.env.SEPOLIA_BLOCKCHAIN_URL);
     wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider); 
 
     const UserManagement = await ethers.getContractFactory("UserManagement");
@@ -62,7 +62,6 @@ async function initializeContracts() {
     consumerTransparency = await ConsumerTransparency.attach(process.env.CONSUMER_TRANSPARENCY_ADDRESS);
 }
 
-// Middleware to ensure contracts are initialized before handling requests
 async function ensureContractsInitialized(req, res, next) {
     if (!userManagement || !inventoryManagement || !supplyChainManagement) {
         await initializeContracts();
