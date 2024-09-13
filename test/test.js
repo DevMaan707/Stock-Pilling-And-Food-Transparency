@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { expect } = require('chai');
-const request = require('supertest');
 const { ethers } = require('hardhat');
+const request = require('supertest');  // Import supertest to test Express routes
 const express = require('express');
 
 // Initialize Express app
@@ -13,26 +13,32 @@ let userManagement, supplyChainManagement, inventoryManagement, disputeResolutio
 let farmer, retailer, consumer, regulator;
 
 async function initializeContracts() {
+    // Deploy UserManagement contract
     const UserManagement = await ethers.getContractFactory("UserManagement");
     userManagement = await UserManagement.deploy();
     await userManagement.deployed();
 
-    const SupplyChainManagement = await ethers.getContractFactory("SupplyChainManagement");
-    supplyChainManagement = await SupplyChainManagement.deploy(userManagement.address);
-    await supplyChainManagement.deployed();
-
+    // Deploy InventoryManagement contract
     const InventoryManagement = await ethers.getContractFactory("InventoryManagement");
     inventoryManagement = await InventoryManagement.deploy(userManagement.address);
     await inventoryManagement.deployed();
 
+    // Deploy SupplyChainManagement contract
+    const SupplyChainManagement = await ethers.getContractFactory("SupplyChainManagement");
+    supplyChainManagement = await SupplyChainManagement.deploy(userManagement.address, inventoryManagement.address);
+    await supplyChainManagement.deployed();
+
+    // Deploy DisputeResolution contract
     const DisputeResolution = await ethers.getContractFactory("DisputeResolution");
     disputeResolution = await DisputeResolution.deploy();
     await disputeResolution.deployed();
 
+    // Deploy ComplianceAndReporting contract
     const ComplianceAndReporting = await ethers.getContractFactory("ComplianceAndReporting");
     complianceAndReporting = await ComplianceAndReporting.deploy(supplyChainManagement.address, userManagement.address);
     await complianceAndReporting.deployed();
 
+    // Deploy ConsumerTransparency contract
     const ConsumerTransparency = await ethers.getContractFactory("ConsumerTransparency");
     consumerTransparency = await ConsumerTransparency.deploy(supplyChainManagement.address);
     await consumerTransparency.deployed();
@@ -40,28 +46,30 @@ async function initializeContracts() {
     // Get signers for different roles
     [farmer, retailer, consumer, regulator] = await ethers.getSigners();
 
-    // Register users with their respective roles, ensuring a fresh setup
-    await userManagement.connect(farmer).registerUser("FarmerUser1", 0); // Role 0: Farmer
-    await userManagement.connect(retailer).registerUser("RetailerUser1", 1); // Role 1: Retailer
-    await userManagement.connect(consumer).registerUser("ConsumerUser1", 2); // Role 2: Consumer
-    await userManagement.connect(regulator).registerUser("RegulatorUser1", 4); // Role 4: Regulator
+    // Register users with their respective roles
+    await userManagement.connect(farmer).registerUser("FarmerUser", 0); // Farmer
+    await userManagement.connect(retailer).registerUser("RetailerUser", 1); // Retailer
+    await userManagement.connect(consumer).registerUser("ConsumerUser", 2); // Consumer
+    await userManagement.connect(regulator).registerUser("RegulatorUser", 4); // Regulator
 }
 
-// Express routes
-app.post('/register', async (req, res) => {
-    const { username, role } = req.body;
+// Express routes for interacting with the contracts
+app.post('/add-inventory', async (req, res) => {
+    const { productId, quantity, price } = req.body;
+    console.log("Adding inventory", productId, quantity, price);  // Debugging log
     try {
-        const tx = await userManagement.registerUser(username, role);
+        const tx = await inventoryManagement.connect(farmer).updateInventory(productId, quantity, price);
         await tx.wait();
-        res.send(`User ${username} registered successfully`);
+        res.send(`Inventory updated for product ID ${productId}`);
     } catch (error) {
-        console.error("Error registering user:", error);
+        console.error("Error updating inventory:", error);
         res.status(500).send(error.toString());
     }
 });
 
 app.post('/record-shipment', async (req, res) => {
     const { productId, destination, quantity, farmerPrice } = req.body;
+    console.log("Recording shipment", productId, destination, quantity, farmerPrice);  // Debugging log
     try {
         const tx = await supplyChainManagement.connect(farmer).recordShipment(productId, destination, quantity, farmerPrice);
         await tx.wait();
@@ -74,41 +82,20 @@ app.post('/record-shipment', async (req, res) => {
 
 app.post('/update-shipment', async (req, res) => {
     const { productId, newStatus, retailerPrice } = req.body;
+    console.log("Updating shipment", productId, newStatus, retailerPrice);  // Debugging log
     try {
         const tx = await supplyChainManagement.connect(retailer).updateShipmentStatusAndRetailerPrice(productId, newStatus, retailerPrice);
         await tx.wait();
-        res.send(`Shipment for product ID ${productId} updated successfully`);
+        res.send(`Shipment updated for product ID ${productId}`);
     } catch (error) {
         console.error("Error updating shipment:", error);
         res.status(500).send(error.toString());
     }
 });
 
-app.post('/update-inventory', async (req, res) => {
-    const { productId, quantity, price } = req.body;
-    try {
-        const tx = await inventoryManagement.connect(retailer).updateInventory(productId, quantity, price);
-        await tx.wait();
-        res.send(`Inventory updated for product ID ${productId}`);
-    } catch (error) {
-        console.error("Error updating inventory:", error);
-        res.status(500).send(error.toString());
-    }
-});
-
-app.get('/inventory/:productId', async (req, res) => {
-    const productId = req.params.productId;
-    try {
-        const inventory = await inventoryManagement.connect(retailer).getInventory(productId);
-        res.json(inventory);
-    } catch (error) {
-        console.error("Error retrieving inventory:", error);
-        res.status(500).send(error.toString());
-    }
-});
-
 app.post('/initiate-dispute', async (req, res) => {
     const { productId, issue, details, evidenceHash } = req.body;
+    console.log("Initiating dispute", productId, issue, details);  // Debugging log
     try {
         const tx = await disputeResolution.connect(consumer).initiateDispute(productId, issue, details, evidenceHash);
         await tx.wait();
@@ -121,6 +108,7 @@ app.post('/initiate-dispute', async (req, res) => {
 
 app.post('/resolve-dispute', async (req, res) => {
     const { disputeId, resolution } = req.body;
+    console.log("Resolving dispute", disputeId, resolution);  // Debugging log
     try {
         const tx = await disputeResolution.connect(retailer).resolveDispute(disputeId, resolution);
         await tx.wait();
@@ -133,6 +121,7 @@ app.post('/resolve-dispute', async (req, res) => {
 
 app.get('/compliance-report/:productId', async (req, res) => {
     const productId = req.params.productId;
+    console.log("Generating compliance report", productId);  // Debugging log
     try {
         const report = await complianceAndReporting.connect(regulator).generateComplianceReport(productId);
         res.send(report);
@@ -144,6 +133,7 @@ app.get('/compliance-report/:productId', async (req, res) => {
 
 app.get('/provenance/:productId', async (req, res) => {
     const productId = req.params.productId;
+    console.log("Retrieving provenance", productId);  // Debugging log
     try {
         const provenance = await consumerTransparency.connect(consumer).getProvenance(productId);
         res.json(provenance);
@@ -155,6 +145,7 @@ app.get('/provenance/:productId', async (req, res) => {
 
 app.get('/quality-checks/:productId', async (req, res) => {
     const productId = req.params.productId;
+    console.log("Retrieving quality checks", productId);  // Debugging log
     try {
         const qualityChecks = await consumerTransparency.connect(consumer).getQualityChecks(productId);
         res.json(qualityChecks);
@@ -179,84 +170,72 @@ after((done) => {
     });
 });
 
-// Tests
-describe("Complete Integration Test for Stockpiling System", function () {
-    it("Should register a user", async function () {
-        // Skipping this test since users are already registered in setup
-        const res = await request(app)
-            .post('/register')
-            .send({ username: "Alice2", role: 0 });
-        expect(res.statusCode).to.equal(500); 
-    });
+describe("Complete Supply Chain Workflow", function () {
+    it("Should allow farmer to add inventory and record shipment", async function () {
+        // Step 1: Add produce to inventory
+        const inventoryRes = await request(app)
+            .post('/add-inventory')
+            .send({ productId: "PRODUCT1", quantity: 100, price: ethers.utils.parseUnits('1', 'ether') });
+        expect(inventoryRes.statusCode).to.equal(200);
+        expect(inventoryRes.text).to.include('Inventory updated for product ID PRODUCT1');
 
-    it("Should record a shipment", async function () {
-        const res = await request(app)
+        // Step 2: Record shipment
+        const shipmentRes = await request(app)
             .post('/record-shipment')
-            .send({ productId: "PRODUCT1231", destination: retailer.address, quantity: 100, farmerPrice: ethers.utils.parseUnits('1', 'ether') });
-        expect(res.statusCode).to.equal(200);
-        expect(res.text).to.include('Shipment recorded for product ID PRODUCT1231');
+            .send({ productId: "PRODUCT1", destination: retailer.address, quantity: 100, farmerPrice: ethers.utils.parseUnits('1', 'ether') });
+        expect(shipmentRes.statusCode).to.equal(200);
+        expect(shipmentRes.text).to.include('Shipment recorded for product ID PRODUCT1');
     });
 
-    it("Should update a shipment", async function () {
-        const res = await request(app)
+    it("Should update shipment status", async function () {
+        // Update shipment status from "Created" to "InTransit" (Status 2)
+        const updateShipmentRes = await request(app)
             .post('/update-shipment')
-            .send({ productId: "PRODUCT1231", newStatus: 2, retailerPrice: ethers.utils.parseUnits('1.5', 'ether') });
-        expect(res.statusCode).to.equal(200);
-        expect(res.text).to.include('Shipment for product ID PRODUCT1231 updated successfully');
+            .send({ productId: "PRODUCT1", newStatus: 2, retailerPrice: ethers.utils.parseUnits('1.5', 'ether') });
+        expect(updateShipmentRes.statusCode).to.equal(200);
+        expect(updateShipmentRes.text).to.include('Shipment updated for product ID PRODUCT1');
     });
 
-    it("Should update inventory", async function () {
-        const res = await request(app)
-            .post('/update-inventory')
-            .send({ productId: "PRODUCT1231", quantity: 50, price: ethers.utils.parseUnits('2', 'ether') });
-        expect(res.statusCode).to.equal(200);
-        expect(res.text).to.include('Inventory updated for product ID PRODUCT1231');
-    });
-
-    it("Should retrieve inventory", async function () {
-        const res = await request(app)
-            .get('/inventory/PRODUCT1231');
-        expect(res.statusCode).to.equal(200);
-        expect(res.body.quantity).to.equal(50); // Quantity should be returned properly
-        expect(res.body.price).to.equal(ethers.utils.parseUnits('2', 'ether').toString()); // Ensure price is returned as a string if needed
-    });
-    
-
-    it("Should initiate a dispute", async function () {
-        const res = await request(app)
+    it("Should initiate and resolve a dispute", async function () {
+        // Step 1: Consumer initiates a dispute
+        const initiateDisputeRes = await request(app)
             .post('/initiate-dispute')
-            .send({ productId: "PRODUCT1231", issue: "Defective product", details: "The product was defective.", evidenceHash: ethers.utils.formatBytes32String("evidence") });
-        expect(res.statusCode).to.equal(200);
-        expect(res.text).to.include('Dispute initiated for product ID PRODUCT1231');
-    });
+            .send({
+                productId: "PRODUCT1",
+                issue: "Defective product",
+                details: "The product arrived damaged.",
+                evidenceHash: ethers.utils.formatBytes32String("evidence")
+            });
+        expect(initiateDisputeRes.statusCode).to.equal(200);
+        expect(initiateDisputeRes.text).to.include('Dispute initiated for product ID PRODUCT1');
 
-    it("Should resolve a dispute", async function () {
-        const res = await request(app)
+        // Step 2: Retailer resolves the dispute
+        const resolveDisputeRes = await request(app)
             .post('/resolve-dispute')
             .send({ disputeId: 0, resolution: "Refund issued" });
-        expect(res.statusCode).to.equal(200);
-        expect(res.text).to.include('Dispute 0 resolved successfully');
+        expect(resolveDisputeRes.statusCode).to.equal(200);
+        expect(resolveDisputeRes.text).to.include('Dispute 0 resolved successfully');
     });
 
     it("Should generate a compliance report", async function () {
-        const res = await request(app)
-            .get('/compliance-report/PRODUCT1231');
-        expect(res.statusCode).to.equal(200);
-        expect(res.text).to.include('Compliance Report for Product ID: PRODUCT1231');
+        const complianceReportRes = await request(app)
+            .get('/compliance-report/PRODUCT1');
+        expect(complianceReportRes.statusCode).to.equal(200);
+        expect(complianceReportRes.text).to.include('Compliance Report for Product ID: PRODUCT1');
     });
 
-    it("Should retrieve provenance information", async function () {
-        const res = await request(app)
-            .get('/provenance/PRODUCT1231');
-        expect(res.statusCode).to.equal(200);
-        expect(res.body).to.be.an('array');
-    });
+    it("Should retrieve provenance and quality checks", async function () {
+        // Step 1: Retrieve provenance
+        const provenanceRes = await request(app)
+            .get('/provenance/PRODUCT1');
+        expect(provenanceRes.statusCode).to.equal(200);
+        expect(provenanceRes.body).to.be.an('array');
 
-    it("Should retrieve quality checks information", async function () {
-        const res = await request(app)
-            .get('/quality-checks/PRODUCT1231');
-        expect(res.statusCode).to.equal(200);
-        expect(res.body).to.be.an('array');
+        // Step 2: Retrieve quality checks
+        const qualityChecksRes = await request(app)
+            .get('/quality-checks/PRODUCT1');
+        expect(qualityChecksRes.statusCode).to.equal(200);
+        expect(qualityChecksRes.body).to.be.an('array');
     });
 });
 

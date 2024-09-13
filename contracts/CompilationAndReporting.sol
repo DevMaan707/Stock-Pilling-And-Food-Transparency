@@ -14,24 +14,24 @@ contract ComplianceAndReporting {
     }
 
     function generateComplianceReport(string memory productId) public view returns (string memory) {
+        // Ensure the user has the regulator role
         (, UserManagement.Role role) = userManagement.getUser(msg.sender);
         require(role == UserManagement.Role.Regulator, "Unauthorized to generate compliance reports.");
 
+        // Fetch shipment history from SupplyChainManagement
         SupplyChainManagement.Shipment[] memory shipmentHistory = supplyChain.getShipmentHistory(productId);
         require(shipmentHistory.length > 0, "No shipment history found for this product.");
 
-        string memory report = string(abi.encodePacked("Compliance Report for Product ID: ", productId, "\n"));
-        report = string(abi.encodePacked(report, "Total Shipments: ", uint2str(shipmentHistory.length), "\n"));
-
+        // Generate report
+        string memory report = "Compliance Report:\n";
         for (uint i = 0; i < shipmentHistory.length; i++) {
-            SupplyChainManagement.Shipment memory shipment = shipmentHistory[i];
-            report = string(abi.encodePacked(report, "Shipment ", uint2str(i+1), ":\n"));
-            report = string(abi.encodePacked(report, "  - Origin: ", addressToString(shipment.origin), "\n"));
-            report = string(abi.encodePacked(report, "  - Destination: ", addressToString(shipment.destination), "\n"));
-            report = string(abi.encodePacked(report, "  - Status: ", getShipmentStatus(shipment.status), "\n"));
-            report = string(abi.encodePacked(report, "  - Farmer Price: ", uint2str(shipment.farmerPrice), "\n"));
-            report = string(abi.encodePacked(report, "  - Retailer Price: ", uint2str(shipment.retailerPrice), "\n"));
-            report = string(abi.encodePacked(report, "  - Timestamp: ", uint2str(shipment.timestamp), "\n"));
+            report = string(abi.encodePacked(
+                report, 
+                "Shipment ", uint2str(i), ":\n",
+                "Origin: ", addressToString(shipmentHistory[i].origin), "\n",
+                "Destination: ", addressToString(shipmentHistory[i].destination), "\n",
+                "Quantity: ", uint2str(shipmentHistory[i].quantity), "\n"
+            ));
         }
 
         return report;

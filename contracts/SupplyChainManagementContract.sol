@@ -2,9 +2,11 @@
 pragma solidity ^0.8.24;
 
 import "./UserManagementContract.sol";
+import "./InventoryManagemntContract.sol";
 
 contract SupplyChainManagement {
     UserManagement private userManagement;
+    InventoryManagement private inventoryManagement;
 
     enum ShipmentStatus { Created, InTransit, Delivered, QualityVerified }
 
@@ -24,28 +26,30 @@ contract SupplyChainManagement {
     event ShipmentRecorded(string productId, address origin, address destination, ShipmentStatus status, uint256 quantity, uint256 farmerPrice, uint256 retailerPrice);
     event ShipmentVerified(string productId, address verifier);
 
-    constructor(address userManagementAddress) {
+    constructor(address userManagementAddress,address inventoryManagementAddress) {
         userManagement = UserManagement(userManagementAddress);
+         inventoryManagement = InventoryManagement(inventoryManagementAddress);
     }
 
-    function recordShipment(string memory productId, address destination, uint256 quantity, uint256 farmerPrice) public {
-        (, UserManagement.Role role) = userManagement.getUser(msg.sender);
-        require(role == UserManagement.Role.Farmer, "Only farmers can initiate shipments.");
+function recordShipment(string memory productId, address destination, uint256 quantity, uint256 farmerPrice) public {
+    (, UserManagement.Role role) = userManagement.getUser(msg.sender);
+    require(role == UserManagement.Role.Farmer, "Only farmers can initiate shipments.");
 
-        Shipment memory newShipment = Shipment({
-            productId: productId,
-            origin: msg.sender,
-            destination: destination,
-            status: ShipmentStatus.Created,
-            timestamp: block.timestamp,
-            quantity: quantity,
-            farmerPrice: farmerPrice,
-            retailerPrice: 0 // Set later by the retailer
-        });
+    // Create the shipment and store it
+    Shipment memory newShipment = Shipment({
+        productId: productId,
+        origin: msg.sender,
+        destination: destination,
+        status: ShipmentStatus.Created,
+        timestamp: block.timestamp,
+        quantity: quantity,
+        farmerPrice: farmerPrice,
+        retailerPrice: 0
+    });
 
-        shipments[productId].push(newShipment);
-        emit ShipmentRecorded(productId, msg.sender, destination, ShipmentStatus.Created, quantity, farmerPrice, 0);
-    }
+    shipments[productId].push(newShipment);
+    emit ShipmentRecorded(productId, msg.sender, destination, ShipmentStatus.Created, quantity, farmerPrice, 0);
+}
 
     function updateShipmentStatusAndRetailerPrice(string memory productId, ShipmentStatus newStatus, uint256 retailerPrice) public {
         Shipment[] storage shipmentHistory = shipments[productId];
