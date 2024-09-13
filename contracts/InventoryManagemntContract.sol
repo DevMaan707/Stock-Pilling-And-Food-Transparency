@@ -10,12 +10,12 @@ contract InventoryManagement {
         string productId;
         uint256 quantity;
         uint256 price;
-        uint256[] priceHistory; // For tracking price changes over time
-        uint256[] quantityHistory; // For tracking inventory changes over time
-        uint256[] timestamps; // To match with price and quantity changes
+        uint256[] priceHistory;
+        uint256[] quantityHistory; 
+        uint256[] timestamps; 
     }
 
-    mapping(address => mapping(string => Inventory)) public inventories; // Store inventory by address and productId
+    mapping(address => mapping(string => Inventory)) public inventories; 
 
     event InventoryUpdated(string productId, uint256 quantity, uint256 price);
     event InventoryPriceUpdated(string productId, uint256 newPrice);
@@ -27,7 +27,6 @@ contract InventoryManagement {
 
 function updateInventory(string memory productId, uint256 quantity, uint256 price) public {
     (, UserManagement.Role role) = userManagement.getUser(msg.sender);
-    // Ensure that both farmers and retailers can update inventory
     require(
         role == UserManagement.Role.Farmer || role == UserManagement.Role.Retailer, 
         "Unauthorized user."
@@ -44,10 +43,7 @@ function updateInventory(string memory productId, uint256 quantity, uint256 pric
 
     emit InventoryUpdated(productId, quantity, price);
 }
-
-
-
-  function getInventory(string memory productId) public view returns (uint256 quantity, uint256 price) {
+ function getInventory(string memory productId) public view returns (uint256 quantity, uint256 price) {
     Inventory memory inventory = inventories[msg.sender][productId];
     return (inventory.quantity, inventory.price);
 }
